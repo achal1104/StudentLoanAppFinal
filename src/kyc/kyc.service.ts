@@ -78,6 +78,17 @@ export class KycService {
     return saved;
   }
 
+  async submitLiveVerification(userId: string, data: any) {
+    let kyc = await this.kycRepository.findOne({ where: { user: { id: userId } } });
+    if (!kyc) {
+      kyc = this.kycRepository.create({ user: { id: userId } as User });
+    }
+    kyc.liveVerified = true;
+    await this.kycRepository.save(kyc);
+    await this.checkAndUpdateKycStatus(userId);
+    return kyc;
+  }
+
   private async checkAndUpdateKycStatus(userId: string) {
     const kyc = await this.kycRepository.findOne({ where: { user: { id: userId } } });
     if (kyc && kyc.aadhaarVerified && kyc.panVerified && kyc.selfieVerified && kyc.bankDetailsVerified) {
