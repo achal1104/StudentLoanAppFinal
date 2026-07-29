@@ -22,6 +22,7 @@ yarn-error.log*
 # Private env files
 .env
 .env.local
+firebase-service-account.json
 
 # Database
 database.sqlite
