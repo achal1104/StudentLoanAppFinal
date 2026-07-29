@@ -17,32 +17,34 @@ export class AuthService implements OnModuleInit {
   onModuleInit() {
     const serviceAccountPath = path.resolve(process.cwd(), 'firebase-service-account.json');
     if (fs.existsSync(serviceAccountPath)) {
-      if (admin.apps.length === 0) {
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccountPath),
-        });
+      try {
+        // Use Type Casting to avoid TS errors on some environments
+        const firebaseAdmin = admin as any;
+        if (firebaseAdmin.apps.length === 0) {
+          firebaseAdmin.initializeApp({
+            credential: firebaseAdmin.credential.cert(serviceAccountPath),
+          });
+        }
+        this.useFirebase = true;
+        console.log('SUCCESS: Firebase Admin SDK initialized');
+      } catch (error) {
+        console.error('ERROR: Firebase initialization failed', error);
       }
-      this.useFirebase = true;
-      console.log('SUCCESS: Firebase Admin SDK initialized');
     } else {
       console.warn('WARNING: firebase-service-account.json not found. Falling back to mock OTP 123456.');
     }
   }
 
   async sendOTP(mobile: string) {
-    // If using real Firebase, the Android app sends the OTP directly.
-    // This endpoint remains for the mock flow.
-    console.log(`Mock: Sending OTP 123456 to ${mobile}`);
+    console.log(`OTP request for ${mobile}`);
     return { message: 'OTP request received' };
   }
 
   async verifyOTP(mobile: string, otp: string) {
-    // Check if it's a Firebase ID Token (usually very long) or a 6-digit mock OTP
     if (otp.length > 20 && this.useFirebase) {
       return this.verifyFirebaseToken(otp);
     }
 
-    // Mock OTP verification
     if (otp !== '123456') {
       throw new UnauthorizedException('Invalid OTP');
     }
@@ -61,8 +63,8 @@ export class AuthService implements OnModuleInit {
 
   async verifyFirebaseToken(idToken: string) {
     try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      // Firebase phone numbers are in format +91XXXXXXXXXX
+      const firebaseAdmin = admin as any;
+      const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
       const mobile = decodedToken.phone_number?.replace('+91', '');
 
       if (!mobile) throw new UnauthorizedException('Phone number missing in Firebase token');
