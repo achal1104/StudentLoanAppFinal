@@ -24,20 +24,21 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() userData: any) {
-    console.log('--- REGISTRATION ATTEMPT ---');
-    console.log('Raw Payload:', JSON.stringify(userData));
+    console.log('--- NEW REGISTRATION ATTEMPT ---');
+    console.log('Payload Received:', JSON.stringify(userData));
 
-    if (!userData.mobile) {
-        throw new BadRequestException('Mobile number is missing in registration data');
+    const mobile = userData.mobile || userData.phone;
+
+    if (!mobile) {
+        console.error('ERROR: No mobile number in payload. Keys:', Object.keys(userData));
+        throw new BadRequestException('CRITICAL_ERROR: Mobile number missing in registration data');
     }
 
     try {
-        let user = await this.userService.findByMobile(userData.mobile);
+        let user = await this.userService.findByMobile(mobile);
         if (!user) {
-            user = await this.userService.createShellUser(userData.mobile);
-            console.log('Created new shell user for registration');
-        } else {
-            console.log('Found existing user for registration update');
+            user = await this.userService.createShellUser(mobile);
+            console.log('Created new shell user for:', mobile);
         }
 
         const updateData = {
@@ -56,16 +57,14 @@ export class AuthController {
             emergencyContact: userData.emergencyContact || null
         };
 
-        console.log('Mapped Update Data:', JSON.stringify(updateData));
         await this.userService.update(user.id, updateData);
-        console.log('SUCCESS: User profile updated');
+        console.log('SUCCESS: Profile updated for:', mobile);
 
-        // Verify with mock OTP to return a valid session
-        return this.authService.verifyOTP(userData.mobile, '123456');
+        return this.authService.verifyOTP(mobile, '123456');
 
     } catch (error) {
-        console.error('CRITICAL: Registration Error ->', error.message);
-        throw new BadRequestException('Registration failed: ' + error.message);
+        console.error('FAILED: Registration processing error ->', error.message);
+        throw new BadRequestException('Registration Processing Failed: ' + error.message);
     }
   }
 
