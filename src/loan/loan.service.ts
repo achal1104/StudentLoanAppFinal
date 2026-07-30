@@ -14,7 +14,6 @@ export class LoanService {
   ) {}
 
   async getEligibility(userId: string) {
-    // Force reload user from DB to get latest KYC status
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (user.kycStatus !== KycStatus.VERIFIED) {
@@ -29,15 +28,7 @@ export class LoanService {
       };
     }
 
-    // Check for active loans
-    const activeLoan = await this.loanRepository.findOne({
-      where: [
-        { user: { id: userId }, status: LoanStatus.PENDING },
-        { user: { id: userId }, status: LoanStatus.APPROVED },
-        { user: { id: userId }, status: LoanStatus.DISBURSED },
-        { user: { id: userId }, status: LoanStatus.OVERDUE },
-      ],
-    });
+    const activeLoan = await this.getCurrentLoan(userId);
 
     if (activeLoan) {
       return {
@@ -60,6 +51,25 @@ export class LoanService {
       requiredCyclesForUpgrade: 4,
       nextUpgradeAmount: 2200,
     };
+  }
+
+  async getCurrentLoan(userId: string): Promise<Loan | null> {
+    return this.loanRepository.findOne({
+      where: [
+        { user: { id: userId }, status: LoanStatus.PENDING },
+        { user: { id: userId }, status: LoanStatus.APPROVED },
+        { user: { id: userId }, status: LoanStatus.DISBURSED },
+        { user: { id: userId }, status: LoanStatus.OVERDUE },
+      ],
+      order: { appliedAt: 'DESC' },
+    });
+  }
+
+  async getLoanHistory(userId: string): Promise<Loan[]> {
+    return this.loanRepository.find({
+      where: { user: { id: userId } },
+      order: { appliedAt: 'DESC' },
+    });
   }
 
   async applyLoan(userId: string, amount: number) {

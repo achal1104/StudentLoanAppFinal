@@ -19,18 +19,17 @@ export class LoanController {
 
   @Get('current')
   async getCurrentLoan(@Request() req) {
-    // In service, you'd need a getCurrentLoan method
-    // For now, let's keep it simple or implement it here
-    return null; // Mock
+    return this.loanService.getCurrentLoan(req.user.id);
   }
 
   @Get('history')
   async getLoanHistory(@Request() req) {
-    return []; // Mock
+    return this.loanService.getLoanHistory(req.user.id);
   }
 
   @Post('accept-agreement')
   async acceptAgreement(@Request() req, @Body('loanId') loanId: string) {
-    return { success: true }; // Mock
+    // In a real app, you'd update the loan record to mark agreement as accepted
+    return { success: true };
   }
 }
