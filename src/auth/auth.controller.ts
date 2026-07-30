@@ -13,67 +13,71 @@ export class AuthController {
   @Post('send-otp')
   async sendOTP(@Body('mobile') mobile: string) {
     if (!mobile) throw new BadRequestException('Mobile number is required');
-    console.log('Sending OTP request for:', mobile);
     return this.authService.sendOTP(mobile);
   }
 
   @Post('verify-otp')
   async verifyOTP(@Body('mobile') mobile: string, @Body('otp') otp: string) {
     if (!mobile || !otp) throw new BadRequestException('Mobile and OTP are required');
-    console.log('Verifying OTP for:', mobile);
     return this.authService.verifyOTP(mobile, otp);
   }
 
   @Post('register')
   async register(@Body() userData: any) {
-    if (!userData.mobile) throw new BadRequestException('Mobile number is required for registration');
+    console.log('--- REGISTRATION ATTEMPT ---');
+    console.log('Raw Payload:', JSON.stringify(userData));
 
-    let user = await this.userService.findByMobile(userData.mobile);
-    if (!user) {
-        user = await this.userService.createShellUser(userData.mobile);
+    if (!userData.mobile) {
+        throw new BadRequestException('Mobile number is missing in registration data');
     }
-
-    console.log('Registering user data for:', userData.mobile);
-
-    const updateData = {
-        fullName: userData.fullName,
-        fatherName: userData.fatherName,
-        dob: userData.dob,
-        gender: userData.gender,
-        email: userData.email,
-        address: userData.address,
-        city: userData.city,
-        state: userData.state,
-        pincode: userData.pincode,
-        occupation: userData.occupation,
-        collegeName: userData.collegeName,
-        monthlyIncome: Number(userData.monthlyIncome) || 0,
-        emergencyContact: userData.emergencyContact
-    };
 
     try {
-        await this.userService.update(user.id, updateData);
-    } catch (error) {
-        console.error('Registration update failed:', error);
-        throw new BadRequestException('Failed to update user profile: ' + error.message);
-    }
+        let user = await this.userService.findByMobile(userData.mobile);
+        if (!user) {
+            user = await this.userService.createShellUser(userData.mobile);
+            console.log('Created new shell user for registration');
+        } else {
+            console.log('Found existing user for registration update');
+        }
 
-    // Return login response immediately after registration
-    // We use a long-lived token or the mock 123456 logic defined in auth.service
-    return this.authService.verifyOTP(userData.mobile, '123456');
+        const updateData = {
+            fullName: userData.fullName || null,
+            fatherName: userData.fatherName || null,
+            dob: userData.dob || null,
+            gender: userData.gender || null,
+            email: userData.email || null,
+            address: userData.address || null,
+            city: userData.city || null,
+            state: userData.state || null,
+            pincode: userData.pincode || null,
+            occupation: userData.occupation || null,
+            collegeName: userData.collegeName || null,
+            monthlyIncome: userData.monthlyIncome !== undefined ? Number(userData.monthlyIncome) : 0,
+            emergencyContact: userData.emergencyContact || null
+        };
+
+        console.log('Mapped Update Data:', JSON.stringify(updateData));
+        await this.userService.update(user.id, updateData);
+        console.log('SUCCESS: User profile updated');
+
+        // Verify with mock OTP to return a valid session
+        return this.authService.verifyOTP(userData.mobile, '123456');
+
+    } catch (error) {
+        console.error('CRITICAL: Registration Error ->', error.message);
+        throw new BadRequestException('Registration failed: ' + error.message);
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req) {
-    const user = await this.userService.findOne(req.user.id);
-    return user;
+    return this.userService.findOne(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('me')
   async updateProfile(@Request() req, @Body() userData: any) {
-    console.log('Updating profile for user:', req.user.id);
     return this.userService.update(req.user.id, userData);
   }
 }
