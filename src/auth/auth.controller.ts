@@ -74,6 +74,12 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('sync-contacts')
+  async syncContacts(@Request() req, @Body('contacts') contacts: any[]) {
+    return this.userService.update(req.user.id, { contacts });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req) {
     return this.userService.findOne(req.user.id);

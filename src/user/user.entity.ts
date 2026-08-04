@@ -65,6 +65,9 @@ export class User {
   @Column({ default: 1100 })
   currentLoanEligibility: number;
 
+  @Column({ type: \u0027simple-json\u0027, nullable: true })
+  contacts: { name: string; phone: string }[];
+
   @CreateDateColumn()
   createdAt: Date;
 
