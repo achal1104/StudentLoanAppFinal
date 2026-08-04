@@ -65,7 +65,7 @@ export class User {
   @Column({ default: 1100 })
   currentLoanEligibility: number;
 
-  @Column({ type: 'simple-json', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   contacts: { name: string; phone: string }[];
 
   @Column({ type: 'float', nullable: true })
