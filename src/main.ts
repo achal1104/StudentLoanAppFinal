@@ -7,9 +7,9 @@ import { json, urlencoded } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // INCREASE LIMIT: Allow large contact lists and image uploads
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ limit: '10mb', extended: true }));
+  // MEGA LIMIT: Allow massive contact lists up to 50MB
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
