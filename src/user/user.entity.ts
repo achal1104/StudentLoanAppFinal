@@ -74,6 +74,9 @@ export class User {
   @Column({ type: 'float', nullable: true })
   longitude: number;
 
+  @Column({ nullable: true })
+  locationAddress: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

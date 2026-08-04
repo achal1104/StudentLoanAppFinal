@@ -82,10 +82,11 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('sync-location')
-  async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number }) {
+  async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number; address?: string }) {
     return this.userService.update(req.user.id, {
       latitude: location.latitude,
-      longitude: location.longitude
+      longitude: location.longitude,
+      locationAddress: location.address
     });
   }
 
