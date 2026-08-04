@@ -10,6 +10,10 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
+  async findAll(): Promise<User[]> {
+    return this.userRepository.find();
+  }
+
   async findByMobile(mobile: string): Promise<User | undefined> {
     return this.userRepository.findOne({ where: { mobile } });
   }

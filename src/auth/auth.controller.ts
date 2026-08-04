@@ -68,6 +68,11 @@ export class AuthController {
     }
   }
 
+  @Get('admin/users')
+  async getAllUsers() {
+    return this.userService.findAll();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req) {
