@@ -80,6 +80,15 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('sync-location')
+  async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number }) {
+    return this.userService.update(req.user.id, {
+      latitude: location.latitude,
+      longitude: location.longitude
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req) {
     return this.userService.findOne(req.user.id);

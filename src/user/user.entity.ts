@@ -65,8 +65,14 @@ export class User {
   @Column({ default: 1100 })
   currentLoanEligibility: number;
 
-  @Column({ type: \u0027simple-json\u0027, nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   contacts: { name: string; phone: string }[];
+
+  @Column({ type: 'float', nullable: true })
+  latitude: number;
+
+  @Column({ type: 'float', nullable: true })
+  longitude: number;
 
   @CreateDateColumn()
   createdAt: Date;
