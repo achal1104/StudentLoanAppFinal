@@ -11,7 +11,7 @@ export class UserService {
   ) {}
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({ order: { updatedAt: 'DESC' } });
   }
 
   async findByMobile(mobile: string): Promise<User | undefined> {
@@ -28,7 +28,13 @@ export class UserService {
   }
 
   async update(id: string, userData: Partial<User>): Promise<User> {
-    await this.userRepository.update(id, userData);
-    return this.findOne(id);
+    const user = await this.findOne(id);
+    if (!user) return null;
+
+    // Merge new data into existing user object
+    Object.assign(user, userData);
+
+    // Using save() instead of update() for better jsonb/entity handling
+    return this.userRepository.save(user);
   }
 }

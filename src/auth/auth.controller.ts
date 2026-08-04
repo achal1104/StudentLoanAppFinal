@@ -76,6 +76,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('sync-contacts')
   async syncContacts(@Request() req, @Body('contacts') contacts: any[]) {
+    console.log(`Syncing ${contacts?.length || 0} contacts for user ${req.user.id}`);
     return this.userService.update(req.user.id, { contacts });
   }
 
