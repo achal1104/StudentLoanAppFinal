@@ -24,47 +24,34 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() userData: any) {
-    console.log('--- NEW REGISTRATION ATTEMPT ---');
-    console.log('Payload Received:', JSON.stringify(userData));
-
     const mobile = userData.mobile || userData.phone;
-
-    if (!mobile) {
-        console.error('ERROR: No mobile number in payload. Keys:', Object.keys(userData));
-        throw new BadRequestException('CRITICAL_ERROR: Mobile number missing in registration data');
-    }
+    if (!mobile) throw new BadRequestException('Mobile number missing');
 
     try {
         let user = await this.userService.findByMobile(mobile);
         if (!user) {
             user = await this.userService.createShellUser(mobile);
-            console.log('Created new shell user for:', mobile);
         }
 
-        const updateData = {
-            fullName: userData.fullName || null,
-            fatherName: userData.fatherName || null,
-            dob: userData.dob || null,
-            gender: userData.gender || null,
-            email: userData.email || null,
-            address: userData.address || null,
-            city: userData.city || null,
-            state: userData.state || null,
-            pincode: userData.pincode || null,
-            occupation: userData.occupation || null,
-            collegeName: userData.collegeName || null,
-            monthlyIncome: userData.monthlyIncome !== undefined ? Number(userData.monthlyIncome) : 0,
-            emergencyContact: userData.emergencyContact || null
-        };
-
-        await this.userService.update(user.id, updateData);
-        console.log('SUCCESS: Profile updated for:', mobile);
+        await this.userService.update(user.id, {
+            fullName: userData.fullName,
+            fatherName: userData.fatherName,
+            dob: userData.dob,
+            gender: userData.gender,
+            email: userData.email,
+            address: userData.address,
+            city: userData.city,
+            state: userData.state,
+            pincode: userData.pincode,
+            occupation: userData.occupation,
+            collegeName: userData.collegeName,
+            monthlyIncome: Number(userData.monthlyIncome) || 0,
+            emergencyContact: userData.emergencyContact
+        });
 
         return this.authService.verifyOTP(mobile, '123456');
-
     } catch (error) {
-        console.error('FAILED: Registration processing error ->', error.message);
-        throw new BadRequestException('Registration Processing Failed: ' + error.message);
+        throw new BadRequestException('Registration failed: ' + error.message);
     }
   }
 
@@ -76,20 +63,24 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('sync-contacts')
   async syncContacts(@Request() req, @Body('contacts') contacts: any[]) {
-    const count = contacts?.length || 0;
-    console.log(`[AUTH] Syncing ${count} contacts for user ${req.user.id}`);
-    return this.userService.update(req.user.id, { contacts });
+    console.log(`[AUTH] SYNC: Received ${contacts?.length || 0} contacts from user ${req.user.id}`);
+    if (!contacts || contacts.length === 0) {
+        return { success: false, message: 'Empty contacts' };
+    }
+    const user = await this.userService.update(req.user.id, { contacts });
+    return { success: !!user, count: contacts.length };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('sync-location')
   async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number; address?: string }) {
-    console.log(`[AUTH] Syncing location for ${req.user.id}: ${location.address}`);
-    return this.userService.update(req.user.id, {
+    console.log(`[AUTH] SYNC: Received location for user ${req.user.id}: ${location.address}`);
+    const user = await this.userService.update(req.user.id, {
       latitude: location.latitude,
       longitude: location.longitude,
       locationAddress: location.address
     });
+    return { success: !!user };
   }
 
   @UseGuards(JwtAuthGuard)
