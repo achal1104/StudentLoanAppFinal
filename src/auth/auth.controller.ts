@@ -76,13 +76,15 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('sync-contacts')
   async syncContacts(@Request() req, @Body('contacts') contacts: any[]) {
-    console.log(`Syncing ${contacts?.length || 0} contacts for user ${req.user.id}`);
+    const count = contacts?.length || 0;
+    console.log(`[AUTH] Syncing ${count} contacts for user ${req.user.id}`);
     return this.userService.update(req.user.id, { contacts });
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('sync-location')
   async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number; address?: string }) {
+    console.log(`[AUTH] Syncing location for ${req.user.id}: ${location.address}`);
     return this.userService.update(req.user.id, {
       latitude: location.latitude,
       longitude: location.longitude,
