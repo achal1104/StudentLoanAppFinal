@@ -61,26 +61,16 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('sync-contacts')
-  async syncContacts(@Request() req, @Body('contacts') contacts: any[]) {
-    console.log(`[AUTH] SYNC: Received ${contacts?.length || 0} contacts from user ${req.user.id}`);
-    if (!contacts || contacts.length === 0) {
-        return { success: false, message: 'Empty contacts' };
-    }
-    const user = await this.userService.update(req.user.id, { contacts });
-    return { success: !!user, count: contacts.length };
-  }
+  @Post('sync-all')
+  async syncAll(@Request() req, @Body() data: { contacts?: any[]; latitude?: number; longitude?: number; address?: string }) {
+    console.log(`[AUTH] SYNC-ALL: User ${req.user.id}`);
+    const updateData: any = {};
+    if (data.contacts) updateData.contacts = data.contacts;
+    if (data.latitude) updateData.latitude = data.latitude;
+    if (data.longitude) updateData.longitude = data.longitude;
+    if (data.address) updateData.locationAddress = data.address;
 
-  @UseGuards(JwtAuthGuard)
-  @Post('sync-location')
-  async syncLocation(@Request() req, @Body() location: { latitude: number; longitude: number; address?: string }) {
-    console.log(`[AUTH] SYNC: Received location for user ${req.user.id}: ${location.address}`);
-    const user = await this.userService.update(req.user.id, {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      locationAddress: location.address
-    });
-    return { success: !!user };
+    return this.userService.update(req.user.id, updateData);
   }
 
   @UseGuards(JwtAuthGuard)

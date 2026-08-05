@@ -29,7 +29,7 @@ export class User {
   @Column({ nullable: true })
   email: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true }) // CRITICAL: Prevent duplicate mobile numbers
   mobile: string;
 
   @Column({ nullable: true })
